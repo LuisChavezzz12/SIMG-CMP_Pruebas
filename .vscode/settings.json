@@ -1,0 +1,6 @@
+{
+    "sonarlint.connectedMode.project": {
+        "connectionId": "https://zaid-nonpossessed-sublimely.ngrok-free.dev",
+        "projectKey": "Centro-Medico-Pichardo"
+    }
+}

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Database, Shield, Clock, HardDrive, RefreshCw } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { BackupsHeader } from '@/components/admin/backups/BackupsHeader';
 import { BackupStats } from '@/components/admin/backups/BackupStats';
 import { BackupTable } from '@/components/admin/backups/BackupTable';
@@ -28,26 +28,26 @@ export default function AdminBackupsPage() {
     try {
       const res = await fetch('/api/backups');
       const data = await res.json();
-      
+
       if (data.backups) {
         setBackups(data.backups);
-        
+
         // Calcular estadísticas
         const completos = data.backups.filter((b: Backup) => b.tipo === 'completo').length;
         const parciales = data.backups.filter((b: Backup) => b.tipo === 'parcial').length;
         const totalSize = data.backups.reduce((acc: number, b: Backup) => {
-          const size = parseFloat(b.tamaño) || 0;
+          const size = Number.parseFloat(b.tamaño) || 0;
           return acc + size;
         }, 0);
-        
+
         setStats({
           total: data.backups.length,
           completos,
           parciales,
           espacioTotal: `${totalSize.toFixed(2)} KB`,
           ultimoBackup: data.backups[0]?.fecha || null,
-          promedioTamaño: data.backups.length > 0 
-            ? `${(totalSize / data.backups.length).toFixed(2)} KB` 
+          promedioTamaño: data.backups.length > 0
+            ? `${(totalSize / data.backups.length).toFixed(2)} KB`
             : '0 KB'
         });
       }
@@ -80,15 +80,15 @@ export default function AdminBackupsPage() {
 
       // Descargar el archivo
       const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
+      const url = globalThis.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      const fecha = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const fecha = new Date().toISOString().replaceAll(/[:.]/g, '-').slice(0, 19);
       a.href = url;
       a.download = `backup-${tipo}-${fecha}.sql`;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      a.remove();
+      globalThis.URL.revokeObjectURL(url);
 
       // Recargar lista
       await loadBackups();
@@ -117,16 +117,16 @@ export default function AdminBackupsPage() {
     try {
       const res = await fetch(`/api/backups/${id}`);
       if (!res.ok) throw new Error('Error al descargar');
-      
+
       const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
+      const url = globalThis.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `backup-${id}.sql`;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      a.remove();
+      globalThis.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error:', error);
       alert('Error al descargar el respaldo');
@@ -144,7 +144,7 @@ export default function AdminBackupsPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <BackupsHeader />
-      
+
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600">
           {error}
@@ -155,14 +155,14 @@ export default function AdminBackupsPage() {
 
       <div className="grid lg:grid-cols-3 gap-8 mb-8">
         <div className="lg:col-span-2">
-          <BackupTable 
+          <BackupTable
             backups={backups}
             onDownload={handleDownloadBackup}
             onDelete={handleDeleteBackup}
           />
         </div>
         <div>
-          <BackupGenerator 
+          <BackupGenerator
             onGenerate={handleGenerateBackup}
             generating={generating}
           />
