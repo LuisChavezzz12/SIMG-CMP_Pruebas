@@ -1,4 +1,4 @@
-import { pgTable, pgSchema, foreignKey, serial, varchar, text, integer, date, numeric, boolean, unique, timestamp, index } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, foreignKey, serial, varchar, text, integer, date, numeric, boolean, unique, timestamp, index, jsonb} from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const clinica = pgSchema("clinica");
@@ -155,3 +155,20 @@ export const serviciosInClinica = clinica.table("servicios", {
 	disenoTipo: varchar("diseno_tipo", { length: 20 }).default('vertical'),
 	activo: boolean().default(true),
 });
+
+export const monitoreoInAuditoria = auditoria.table("monitoreo", {
+    id: serial().primaryKey().notNull(),
+    tipoEvento: varchar("tipo_evento", { length: 50 }).notNull(), // 'HEARTBEAT', 'LATENCY', 'SECURITY'
+    valor: numeric({ precision: 10, scale: 2 }), // Para latencia en ms o tamaño en MB
+    metadatos: jsonb("metadatos"), // Aquí guardaremos el error o info extra
+    usuarioId: integer("usuario_id"), // Para el punto 4 (Seguridad/Auditoría)
+    fechaCreacion: timestamp("fecha_creacion").defaultNow(),
+}, (table) => [
+    foreignKey({
+        columns: [table.usuarioId],
+        foreignColumns: [usuariosInSeguridad.id],
+        name: "monitoreo_usuario_id_fk"
+    }),
+    index("idx_monitoreo_tipo").on(table.tipoEvento),
+    index("idx_monitoreo_fecha").on(table.fechaCreacion),
+]);
